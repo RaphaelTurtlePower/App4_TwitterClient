@@ -1,16 +1,25 @@
 package com.apps.twitter.client;
 
+
+import org.json.JSONObject;
+
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.widget.Toast;
 
 import com.apps.twitter.client.R;
+import com.apps.twitter.client.model.AppUser;
+import com.apps.twitter.client.model.User;
 import com.codepath.oauth.OAuthLoginActivity;
+import com.loopj.android.http.JsonHttpResponseHandler;
 
 public class LoginActivity extends OAuthLoginActivity<TwitterClient> {
 
+	TwitterClient client;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -28,10 +37,24 @@ public class LoginActivity extends OAuthLoginActivity<TwitterClient> {
 	// i.e Display application "homepage"
     @Override
     public void onLoginSuccess() {
-    	Intent i = new Intent(this, TimelineActivity.class);
-    	startActivity(i);
-    	Toast.makeText(this, "Success!", Toast.LENGTH_SHORT).show();
-    
+    	client = TwitterApplication.getRestClient();
+    	client.getVerifiedCredentials(new JsonHttpResponseHandler(){
+    		@Override
+			public void onFailure(Throwable e, String s){
+				Log.d("debug", e.toString());
+				Log.d("debug", s);
+			}
+			
+			@Override
+			public void onSuccess(JSONObject json){
+				AppUser.setAppUser(User.fromJSON(json));
+				Intent i = new Intent(LoginActivity.this, TimelineActivity.class);
+		    	startActivity(i);
+		    	Toast.makeText(LoginActivity.this, "Success!", Toast.LENGTH_SHORT).show();
+			}
+    	});
+    	
+     
     }
     
     // OAuth authentication flow failed, handle the error

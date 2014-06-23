@@ -29,19 +29,27 @@ public class TwitterClient extends OAuthBaseClient {
     public static final String REST_CALLBACK_URL = "oauth://twitterclient"; // Change this (here and in manifest)
     
     
-    
     public TwitterClient(Context context) {
         super(context, REST_API_CLASS, REST_URL, REST_CONSUMER_KEY, REST_CONSUMER_SECRET, REST_CALLBACK_URL);
     }
     
-    public void getTwitterTimeline(AsyncHttpResponseHandler handler){
+    public void getTwitterTimeline(Long since_id, Long max_id, AsyncHttpResponseHandler handler){
     	String apiUrl = getApiUrl("statuses/home_timeline.json");
     	RequestParams params = new RequestParams();
-    	params.put("since_id", "1");
+    	if(since_id != null){
+    		params.put("since_id", since_id.toString());
+    	}
+    	if(max_id != null){
+    		params.put("max_id", max_id.toString() );
+    	}
     	client.get(apiUrl,params, handler);
     	
     }
     
+    public void getVerifiedCredentials(AsyncHttpResponseHandler handler){
+    	String apiUrl = getApiUrl("account/verify_credentials.json");
+    	client.get(apiUrl,  handler);
+    }
     
     public void postTweet(AsyncHttpResponseHandler handler, String tweet){
     	String apiUrl = getApiUrl("statuses/update.json");

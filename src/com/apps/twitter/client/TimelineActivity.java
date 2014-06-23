@@ -6,7 +6,6 @@ import org.json.JSONArray;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.support.v4.app.DialogFragment;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -17,26 +16,47 @@ import com.apps.twitter.client.CreateTweetDialog.DialogResult;
 import com.apps.twitter.client.model.Tweet;
 import com.loopj.android.http.JsonHttpResponseHandler;
 
+import eu.erikw.PullToRefreshListView;
+import eu.erikw.PullToRefreshListView.OnRefreshListener;
+
 public class TimelineActivity extends Activity {
 	private TwitterClient client;
 	private ArrayList<Tweet> tweets;
 	private TweetArrayAdapter aTweets;
-	private ListView lvTweets;
+	private PullToRefreshListView lvTweets;
+	private Long lastId;
+	private Long firstId;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_timeline);
 		client = TwitterApplication.getRestClient();
-		populateTimeline();
-		lvTweets = (ListView) findViewById(R.id.lvTweets);
+		populateTimeline(new Long(1), null);
+		lvTweets = (PullToRefreshListView) findViewById(R.id.lvTweets);
+		lvTweets.setOnRefreshListener(new OnRefreshListener(){
+
+			@Override
+			public void onRefresh() {
+				fetchTimelineAsync();
+			}
+		});
+
 		tweets = new ArrayList<Tweet>();
 		aTweets = new TweetArrayAdapter(this, tweets);
 		lvTweets.setAdapter(aTweets);
+		lvTweets.setOnScrollListener(new EndlessScrollListener(){
+
+			@Override
+			public void onLoadMore(int page, int totalItemsCount) {
+				populateTimeline(null, lastId);
+			}
+			
+		});
 	}
 	
-	public void populateTimeline(){
-		client.getTwitterTimeline(new JsonHttpResponseHandler(){
+	public void populateTimeline(Long start_id, Long max_id){
+		client.getTwitterTimeline(start_id,max_id, new JsonHttpResponseHandler(){
 			@Override
 			public void onFailure(Throwable e, String s){
 				Log.d("debug", e.toString());
@@ -46,6 +66,9 @@ public class TimelineActivity extends Activity {
 			@Override
 			public void onSuccess(JSONArray json){
 				aTweets.addAll(Tweet.fromJSONArray(json));
+				Integer totalCount = aTweets.getCount();
+				firstId = aTweets.getItem(0).getUid();
+				lastId = aTweets.getItem(totalCount-1).getUid();			
 			}
 		});
 	}
@@ -68,6 +91,7 @@ public class TimelineActivity extends Activity {
 		    			Log.d("debug", result.getBody() + result.getUid());
 		    			Toast.makeText(TimelineActivity.this, result.getBody(), Toast.LENGTH_LONG).show();
 		    			aTweets.insert(result,0);
+		    			firstId = result.getUid();
 					}
 		    		
 		    	});
@@ -77,5 +101,21 @@ public class TimelineActivity extends Activity {
 		    return true;
 		}
 		
-	
+	    public void fetchTimelineAsync() {
+	        client.getTwitterTimeline(firstId, null, new JsonHttpResponseHandler() {
+	            public void onSuccess(JSONArray json) {
+	            	ArrayList<Tweet> newTweets = Tweet.fromJSONArray(json);
+	            	for(int i=newTweets.size()-1; i>=0; i--){
+	            		aTweets.insert(newTweets.get(i), 0);
+	            	}
+	            	// ...the data has come back, finish populating listview...
+	                // Now we call onRefreshComplete to signify refresh has finished
+	                lvTweets.onRefreshComplete();
+	            }
+
+	            public void onFailure(Throwable e) {
+	                Log.d("DEBUG", "Fetch timeline error: " + e.toString());
+	            }
+	        });
+	    }
 }
