@@ -1,4 +1,4 @@
-package com.apps.twitter.client;
+package com.apps.twitter.client.adapters;
 
 import java.util.List;
 
@@ -10,6 +10,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.apps.twitter.client.R;
 import com.apps.twitter.client.model.Tweet;
 import com.nostra13.universalimageloader.core.ImageLoader;
 

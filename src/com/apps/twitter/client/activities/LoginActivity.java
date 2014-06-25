@@ -1,9 +1,12 @@
-package com.apps.twitter.client;
+package com.apps.twitter.client.activities;
 
 
 import org.json.JSONObject;
 
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -11,6 +14,8 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.apps.twitter.client.R;
+import com.apps.twitter.client.helpers.TwitterApplication;
+import com.apps.twitter.client.helpers.TwitterClient;
 import com.apps.twitter.client.model.AppUser;
 import com.apps.twitter.client.model.User;
 import com.codepath.oauth.OAuthLoginActivity;
@@ -49,12 +54,11 @@ public class LoginActivity extends OAuthLoginActivity<TwitterClient> {
 			public void onSuccess(JSONObject json){
 				AppUser.setAppUser(User.fromJSON(json));
 				Intent i = new Intent(LoginActivity.this, TimelineActivity.class);
-		    	startActivity(i);
-		    	Toast.makeText(LoginActivity.this, "Success!", Toast.LENGTH_SHORT).show();
+		    	i.putExtra("isConnected", true);
+				startActivity(i);
+		    	Toast.makeText(LoginActivity.this, "Authentication Successful", Toast.LENGTH_SHORT).show();
 			}
     	});
-    	
-     
     }
     
     // OAuth authentication flow failed, handle the error
@@ -64,11 +68,25 @@ public class LoginActivity extends OAuthLoginActivity<TwitterClient> {
         e.printStackTrace();
     }
     
+    public Boolean isNetworkAvailable() {
+	    ConnectivityManager connectivityManager 
+	          = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+	    NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+	    return activeNetworkInfo != null && activeNetworkInfo.isConnectedOrConnecting();
+	}
+    
     // Click handler method for the button used to start OAuth flow
     // Uses the client to initiate OAuth authorization
     // This should be tied to a button used to login
     public void loginToRest(View view) {
-        getClient().connect();
+    	if(isNetworkAvailable()){
+    		getClient().connect();
+    	}else{
+    		Intent i = new Intent(LoginActivity.this, TimelineActivity.class);
+    		i.putExtra("isConnected", false);
+    		startActivity(i);
+    		Toast.makeText(LoginActivity.this,  "Offline Mode", Toast.LENGTH_LONG).show();
+    	}
     }
-
+    
 }

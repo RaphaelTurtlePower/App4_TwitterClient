@@ -1,13 +1,16 @@
-package com.apps.twitter.client;
+package com.apps.twitter.client.fragments;
 
 import org.json.JSONObject;
 
+import com.apps.twitter.client.R;
+import com.apps.twitter.client.helpers.TwitterApplication;
+import com.apps.twitter.client.helpers.TwitterClient;
+import com.apps.twitter.client.interfaces.DialogResult;
 import com.apps.twitter.client.model.AppUser;
 import com.apps.twitter.client.model.Tweet;
 import com.apps.twitter.client.model.User;
 import com.loopj.android.http.JsonHttpResponseHandler;
 
-import android.R.color;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
@@ -54,7 +57,7 @@ public class CreateTweetDialog extends DialogFragment {
 			public void onTextChanged(CharSequence s, int start, int before,
 					int count) {
 				TextView textCount = (TextView) dialogView.findViewById(R.id.textCount);
-				textCount.setText(new Integer(MAX_LENGTH - s.length()).toString());
+				textCount.setText(Integer.valueOf(MAX_LENGTH - s.length()).toString());
 			}
 
 			@Override
@@ -96,8 +99,5 @@ public class CreateTweetDialog extends DialogFragment {
     	this.dialogResult = dr;
     }
     
-    public interface DialogResult{
-        void finish(Tweet result);
-     }
     
 }
